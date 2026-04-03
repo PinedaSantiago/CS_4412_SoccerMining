@@ -7,9 +7,33 @@
 
 ## Project Overview
 
-This project applies the KDD (Knowledge Discovery in Databases) process to discover latent passing archetypes in the English Premier League. Rather than relying on season-long averages or positional labels, we cluster at the **match level** to capture how players' passing roles shift based on tactical context.
+This project applies the KDD process to discover latent passing archetypes in the English Premier League. Rather than relying on season-long averages or positional labels, I clustered at the **match level** to capture how players' passing roles shift based on tactical context.
 
 Data is sourced from FBref via the `soccerdata` Python API, covering player-match passing records across the 2024–25 and 2025–26 EPL seasons.
+
+> **Sample size note:** This analysis covers 40 EPL players across 8 positions. Findings are internally consistent and statistically robust within this sample. Archetype percentages and player-specific conclusions should not be extrapolated to the full EPL squad without replication on the complete player pool.
+
+---
+
+## Discovery Questions
+
+| # | Question |
+|---|----------|
+| DQ1 | What natural passing archetypes emerge from match-level player performances? |
+| DQ2 | How do match contexts (opponent pressing intensity, game state) associate with different arch# Architects of Play: Discovering Soccer Passing Archetypes in the EPL
+
+**CS 4412 — Data Mining | Spring 2026**
+**Author:** Santiago Pineda
+
+---
+
+## Project Overview
+
+This project applies the KDD process to discover latent passing archetypes in the English Premier League. Rather than relying on season-long averages or positional labels, I clustered at the **match level** to capture how players' passing roles shift based on tactical context.
+
+Data is sourced from FBref via the `soccerdata` Python API, covering player-match passing records across the 2024–25 and 2025–26 EPL seasons.
+
+> **Sample size note:** This analysis covers 40 EPL players across 8 positions. Findings are internally consistent and statistically robust within this sample. Archetype percentages and player-specific conclusions should not be extrapolated to the full EPL squad without replication on the complete player pool.
 
 ---
 
@@ -28,24 +52,28 @@ Data is sourced from FBref via the `soccerdata` Python API, covering player-matc
 | Milestone | Status | Description |
 |-----------|--------|-------------|
 | M1 | ✅ Complete | Project proposal, discovery questions, data plan |
-| M2 | ✅ Complete | EDA, preprocessing, transformation, K-Means clustering |
-| M3 | 🔲 Upcoming | Apriori association rule mining, final report |
+| M2 | ✅ Complete | EDA, preprocessing, transformation, K-Means clustering (k=2) |
+| M3 | ✅ Complete | Extended clustering, Apriori rules, Decision Tree, Naive Bayes |
+| M4 | 🔲 Upcoming | Polish, critical assessment, final report |
 
 ---
 
-## M2 Results Summary
+## M3 Results Summary
 
-### Discovered Archetypes (K-Means++, k=2, Silhouette=0.305)
+### Discovered Archetypes (K-Means++, k=4)
 
-| Archetype | N | % | Passes/90 | Prog. Ratio | Press Index | Top Positions |
-|-----------|---|---|-----------|-------------|-------------|---------------|
-| Deep Builder | 1,580 | 66.1% | 51.2 | 0.321 | 0.165 | CB, GK, CM |
-| Direct Outlet | 810 | 33.9% | 35.0 | 0.469 | 0.310 | FW, LW, CAM |
+| Archetype | N | % | Passes/90 | Prog.Ratio | Press Idx | Top Positions |
+|-----------|---|---|-----------|------------|-----------|---------------|
+| Safety Valve | 671 | 28.1% | 39.6 | 0.266 | 0.112 | GK, CB, LB |
+| Direct Outlet | 648 | 27.1% | 32.9 | 0.471 | 0.317 | FW, LW, CAM |
+| Press Resistant | 503 | 21.0% | 49.7 | 0.423 | 0.255 | CM, CAM, RB |
+| Deep Builder | 568 | 23.8% | 63.9 | 0.337 | 0.182 | CB, CM, RB |
 
 ### Key Findings
-- **DQ1:** Two macro-archetypes emerge that are *not* equivalent to positional labels — a CM in a high-press system can behave as a Direct Outlet
-- **DQ2:** High opponent pressing (PPDA < 9) reduces pass volume by ~5 passes/90 and shifts profiles toward more direct play
-- **DQ3:** Players like A. Onana (CM) shift archetype by context; O. Watkins (FW) is a confirmed specialist
+
+- **DQ1:** Four archetypes confirmed. `Passes/90` is the primary discriminator; `Press Index` and `Prog.Ratio` define the secondary splits. Naive Bayes accuracy = 97% confirms clusters are well-separated despite modest silhouette (0.24)
+- **DQ2:** 25 association rules found. High press exposure + high verticality → Direct Outlet (lift=2.72). Very high volume → Deep Builder (lift=3.57). Pressing intensity is a stronger context driver than game state
+- **DQ3:** GKs are the strongest specialists (95%+ Safety Valve). CMs (Onana, Rice) cross between Press Resistant and Deep Builder by context — confirmed versatile
 
 ---
 
@@ -55,34 +83,37 @@ Data is sourced from FBref via the `soccerdata` Python API, covering player-matc
 ├── 01_data_extraction.py       # Data pull from FBref via soccerdata API
 ├── 02_eda.py                   # Exploratory data analysis (7 figures)
 ├── 03_preprocessing.py         # Imputation + Isolation Forest anomaly detection
-├── 04_clustering.py            # StandardScaler + K-Means++ clustering (4 figures)
-├── 05_build_notebook.py        # Assembles the Jupyter notebook
-├── 06_build_pdf.py             # Generates the PDF summary
+├── 04_clustering.py            # M2: StandardScaler + K-Means++ k=2
+├── 05_build_notebook.py        # Assembles M2 Jupyter notebook
+├── 06_build_pdf.py             # Generates M2 PDF summary
+├── 07_extended_clustering.py   # M3: k=2..8 comparison, DBSCAN, Hierarchical
+├── 08_association_rules.py     # M3: Apriori association rule mining
+├── 09_classification.py        # M3: Decision Tree + Naive Bayes
+├── 10_build_m3_notebook.py     # Assembles M3 Jupyter notebook
+├── 11_build_m3_pdf.py          # Generates M3 PDF summary
 │
 ├── data/
-│   ├── epl_passing_clean.csv   # Raw extracted dataset (2,516 instances)
-│   ├── epl_preprocessed.csv    # Clean dataset after imputation + anomaly removal (2,390)
-│   ├── epl_anomalies.csv       # Flagged anomalous instances (126)
-│   └── epl_clustered.csv       # Final dataset with cluster + archetype labels
+│   ├── epl_passing_clean.csv       # Raw extracted dataset (2,516 instances)
+│   ├── epl_preprocessed.csv        # After imputation + anomaly removal (2,390)
+│   ├── epl_anomalies.csv           # Flagged anomalous instances (126)
+│   ├── epl_clustered.csv           # M2: k=2 cluster labels
+│   └── epl_k4_clustered.csv        # M3: k=4 archetype labels
 │
 ├── outputs/
-│   ├── fig_01_distributions.png
-│   ├── fig_02_positional_profiles.png
-│   ├── fig_03_correlation_heatmap.png
-│   ├── fig_04_context_effects.png
-│   ├── fig_05_player_variance.png
-│   ├── fig_06_data_quality.png
-│   ├── fig_07_scatter_matrix.png
-│   ├── fig_08_anomaly_viz.png
-│   ├── fig_09_imputation.png
-│   ├── fig_10_elbow_silhouette.png
-│   ├── fig_11_cluster_profiles.png
-│   ├── fig_12_cluster_scatter.png
-│   ├── fig_13_archetype_context.png
-│   ├── cluster_summary.csv
-│   └── preprocessing_report.txt
+│   ├── fig_01 – fig_13             # M2 EDA + clustering figures
+│   ├── fig_14_k_extended.png       # M3: k=2..8 three-metric comparison
+│   ├── fig_15_clustering_comparison.png  # K-Means vs DBSCAN vs Hierarchical
+│   ├── fig_16_k4_profiles.png      # k=4 archetype characterization
+│   ├── fig_17_association_rules.png# Support/confidence/lift scatter
+│   ├── fig_18_top_rules.png        # Top rules by lift
+│   ├── fig_19_decision_tree.png    # Shallow decision tree visualization
+│   ├── fig_20_feature_importance.png # DT feature importances
+│   ├── fig_21_naive_bayes.png      # NB class-conditional heatmap
+│   ├── association_rules.csv       # Full rule table (25 rules)
+│   └── cluster_summary.csv
 │
-└── CS4412_M2_Santiago_Pineda.ipynb   # Full M2 notebook (self-contained, outputs embedded)
+├── CS4412_M2_Santiago_Pineda.ipynb
+└── CS4412_M3_Santiago_Pineda.ipynb   # M3 notebook (self-contained, outputs embedded)
 ```
 
 ---
@@ -92,55 +123,199 @@ Data is sourced from FBref via the `soccerdata` Python API, covering player-matc
 ### Requirements
 
 ```bash
-pip install pandas numpy matplotlib seaborn scikit-learn reportlab
+pip install pandas numpy matplotlib seaborn scikit-learn scipy reportlab
 ```
 
-### Run the full pipeline in order
+### Run the full M3 pipeline
 
 ```bash
-python 01_data_extraction.py    # generates data/epl_passing_clean.csv
-python 02_eda.py                # generates fig_01 through fig_07
-python 03_preprocessing.py      # generates fig_08, fig_09, preprocessed data
-python 04_clustering.py         # generates fig_10 through fig_13, clustered data
-python 05_build_notebook.py     # assembles CS4412_M2_Santiago_Pineda.ipynb
-python 06_build_pdf.py          # generates CS4412_M2_Summary_Santiago_Pineda.pdf
+# M2 pipeline (required first)
+python 01_data_extraction.py
+python 02_eda.py
+python 03_preprocessing.py
+python 04_clustering.py
+
+# M3 additions
+python 07_extended_clustering.py    # Extended k analysis + algorithm comparison
+python 08_association_rules.py      # Apriori rule mining
+python 09_classification.py         # Decision Tree + Naive Bayes
+
+# Build deliverables
+python 10_build_m3_notebook.py
+python 11_build_m3_pdf.py
 ```
 
-Each script depends on the output of the previous. Running them in order from a clean directory fully reproduces all figures, datasets, and deliverables.
-
-### Or just open the notebook
-
-The notebook (`CS4412_M2_Santiago_Pineda.ipynb`) is fully self-contained with all outputs already embedded. Open it in Jupyter and all figures and results are visible immediately without running any cells.
+The M3 notebook (`CS4412_M3_Santiago_Pineda.ipynb`) is fully self-contained with all 21 figures embedded. Open in Jupyter and all results are visible immediately.
 
 ---
 
-## Features & Engineering
+## Features
 
 | Feature | Description | Source |
 |---------|-------------|--------|
-| `passes_att_p90` | Total attempted passes per 90 minutes | FBref match logs |
-| `padj_passes` | Possession-adjusted pass volume | Engineered: `(raw × 0.50) / (poss% / 100)` |
-| `prog_dist_ratio` | Progressive passing distance as % of total | FBref match logs |
-| `press_index` | % of passes made under defensive pressure | FBref match logs |
-| `opp_ppda` | Opponent pressing intensity (passes per defensive action) | FBref match logs |
-| `score_delta` | Final goal difference from player's team perspective | FBref match logs |
+| `passes_att_p90` | Attempted passes per 90 minutes | FBref |
+| `padj_passes` | Possession-adjusted pass volume: `(raw × 0.50) / (poss%)` | Engineered |
+| `prog_dist_ratio` | Progressive passing distance % of total | FBref |
+| `press_index` | % of passes under defensive pressure | FBref |
+| `opp_ppda` | Opponent pressing intensity | FBref |
+| `score_delta` | Final goal difference (player's team) | FBref |
 
 ---
 
-## Preprocessing Decisions
+## M3 Technique Summary
 
-| Step | Decision | Rationale |
-|------|----------|-----------|
-| Missing values | Median imputation by position group | Preserves positional profile distributions; MAR assumption |
-| Anomaly detection | Isolation Forest (contamination=0.05) | Red card proxies (~4%) + blowout matches suggest ~5% upper bound |
-| Scaling | StandardScaler (Z-score) | K-Means uses Euclidean distance; prevents high-range features from dominating |
+| Technique | Parameters | Purpose |
+|-----------|------------|---------|
+| K-Means++ k=4 | n_init=50, random_state=42 | Primary archetype discovery |
+| DBSCAN | eps=0.50, min_samples=15 | Algorithm comparison |
+| Hierarchical Ward | k=4 | Algorithm comparison (ARI=0.38 vs K-Means) |
+| Apriori | support=0.08, confidence=0.50, lift=1.2 | Context→archetype rules |
+| Decision Tree | max_depth=3 (interpretable), depth=5 (accurate) | Interpretable rules |
+| Naive Bayes | GaussianNB | Feature probability structure |
 
 ---
 
-## M3 Plan
+## M4 Plan
 
-M3 will apply **Apriori association rule mining** to formally quantify the relationship between match context and archetype adoption.
+- Full-season archetype trajectory per player
+- Expanded context variables (formation, opponent ranking)
+- Critical assessment: which findings generalize beyond the 40-player sample?
+- Publication-quality polish and final narrativeetypes? |
+| DQ3 | Which players exhibit archetype versatility across matches versus consistent specialization? |
 
-- Each match instance becomes a transaction of discretized context bins + archetype label
-- Target rules: `{High_Press, Losing}` → `{Deep_Builder}`, `{Low_Press, Winning}` → `{Direct_Outlet}`
-- Parameters: min support = 0.10, min confidence = 0.60, lift > 1.0
+---
+
+## Milestones
+
+| Milestone | Status | Description |
+|-----------|--------|-------------|
+| M1 | ✅ Complete | Project proposal, discovery questions, data plan |
+| M2 | ✅ Complete | EDA, preprocessing, transformation, K-Means clustering (k=2) |
+| M3 | ✅ Complete | Extended clustering, Apriori rules, Decision Tree, Naive Bayes |
+| M4 | 🔲 Upcoming | Polish, critical assessment, final report |
+
+---
+
+## M3 Results Summary
+
+### Discovered Archetypes (K-Means++, k=4)
+
+| Archetype | N | % | Passes/90 | Prog.Ratio | Press Idx | Top Positions |
+|-----------|---|---|-----------|------------|-----------|---------------|
+| Safety Valve | 671 | 28.1% | 39.6 | 0.266 | 0.112 | GK, CB, LB |
+| Direct Outlet | 648 | 27.1% | 32.9 | 0.471 | 0.317 | FW, LW, CAM |
+| Press Resistant | 503 | 21.0% | 49.7 | 0.423 | 0.255 | CM, CAM, RB |
+| Deep Builder | 568 | 23.8% | 63.9 | 0.337 | 0.182 | CB, CM, RB |
+
+### Key Findings
+
+- **DQ1:** Four archetypes confirmed. `Passes/90` is the primary discriminator; `Press Index` and `Prog.Ratio` define the secondary splits. Naive Bayes accuracy = 97% confirms clusters are well-separated despite modest silhouette (0.24)
+- **DQ2:** 25 association rules found. High press exposure + high verticality → Direct Outlet (lift=2.72). Very high volume → Deep Builder (lift=3.57). Pressing intensity is a stronger context driver than game state
+- **DQ3:** GKs are the strongest specialists (95%+ Safety Valve). CMs (Onana, Rice) cross between Press Resistant and Deep Builder by context — confirmed versatile
+
+---
+
+## Repository Structure
+
+```
+├── 01_data_extraction.py       # Data pull from FBref via soccerdata API
+├── 02_eda.py                   # Exploratory data analysis (7 figures)
+├── 03_preprocessing.py         # Imputation + Isolation Forest anomaly detection
+├── 04_clustering.py            # M2: StandardScaler + K-Means++ k=2
+├── 05_build_notebook.py        # Assembles M2 Jupyter notebook
+├── 06_build_pdf.py             # Generates M2 PDF summary
+├── 07_extended_clustering.py   # M3: k=2..8 comparison, DBSCAN, Hierarchical
+├── 08_association_rules.py     # M3: Apriori association rule mining
+├── 09_classification.py        # M3: Decision Tree + Naive Bayes
+├── 10_build_m3_notebook.py     # Assembles M3 Jupyter notebook
+├── 11_build_m3_pdf.py          # Generates M3 PDF summary
+│
+├── data/
+│   ├── epl_passing_clean.csv       # Raw extracted dataset (2,516 instances)
+│   ├── epl_preprocessed.csv        # After imputation + anomaly removal (2,390)
+│   ├── epl_anomalies.csv           # Flagged anomalous instances (126)
+│   ├── epl_clustered.csv           # M2: k=2 cluster labels
+│   └── epl_k4_clustered.csv        # M3: k=4 archetype labels
+│
+├── outputs/
+│   ├── fig_01 – fig_13             # M2 EDA + clustering figures
+│   ├── fig_14_k_extended.png       # M3: k=2..8 three-metric comparison
+│   ├── fig_15_clustering_comparison.png  # K-Means vs DBSCAN vs Hierarchical
+│   ├── fig_16_k4_profiles.png      # k=4 archetype characterization
+│   ├── fig_17_association_rules.png# Support/confidence/lift scatter
+│   ├── fig_18_top_rules.png        # Top rules by lift
+│   ├── fig_19_decision_tree.png    # Shallow decision tree visualization
+│   ├── fig_20_feature_importance.png # DT feature importances
+│   ├── fig_21_naive_bayes.png      # NB class-conditional heatmap
+│   ├── association_rules.csv       # Full rule table (25 rules)
+│   └── cluster_summary.csv
+│
+├── CS4412_M2_Santiago_Pineda.ipynb
+└── CS4412_M3_Santiago_Pineda.ipynb   # M3 notebook (self-contained, outputs embedded)
+```
+
+---
+
+## How to Run
+
+### Requirements
+
+```bash
+pip install pandas numpy matplotlib seaborn scikit-learn scipy reportlab
+```
+
+### Run the full M3 pipeline
+
+```bash
+# M2 pipeline (required first)
+python 01_data_extraction.py
+python 02_eda.py
+python 03_preprocessing.py
+python 04_clustering.py
+
+# M3 additions
+python 07_extended_clustering.py    # Extended k analysis + algorithm comparison
+python 08_association_rules.py      # Apriori rule mining
+python 09_classification.py         # Decision Tree + Naive Bayes
+
+# Build deliverables
+python 10_build_m3_notebook.py
+python 11_build_m3_pdf.py
+```
+
+The M3 notebook (`CS4412_M3_Santiago_Pineda.ipynb`) is fully self-contained with all 21 figures embedded. Open in Jupyter and all results are visible immediately.
+
+---
+
+## Features
+
+| Feature | Description | Source |
+|---------|-------------|--------|
+| `passes_att_p90` | Attempted passes per 90 minutes | FBref |
+| `padj_passes` | Possession-adjusted pass volume: `(raw × 0.50) / (poss%)` | Engineered |
+| `prog_dist_ratio` | Progressive passing distance % of total | FBref |
+| `press_index` | % of passes under defensive pressure | FBref |
+| `opp_ppda` | Opponent pressing intensity | FBref |
+| `score_delta` | Final goal difference (player's team) | FBref |
+
+---
+
+## M3 Technique Summary
+
+| Technique | Parameters | Purpose |
+|-----------|------------|---------|
+| K-Means++ k=4 | n_init=50, random_state=42 | Primary archetype discovery |
+| DBSCAN | eps=0.50, min_samples=15 | Algorithm comparison |
+| Hierarchical Ward | k=4 | Algorithm comparison (ARI=0.38 vs K-Means) |
+| Apriori | support=0.08, confidence=0.50, lift=1.2 | Context→archetype rules |
+| Decision Tree | max_depth=3 (interpretable), depth=5 (accurate) | Interpretable rules |
+| Naive Bayes | GaussianNB | Feature probability structure |
+
+---
+
+## M4 Plan
+
+- Full-season archetype trajectory per player
+- Expanded context variables (formation, opponent ranking)
+- Critical assessment: which findings generalize beyond the 40-player sample?
+- Publication-quality polish and final narrative
